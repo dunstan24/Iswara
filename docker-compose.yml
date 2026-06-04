@@ -21,6 +21,17 @@ services:
     networks:
       - iswara_network
 
+  frontend:
+    image: node:20
+    container_name: iswara_frontend
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+    ports:
+      - "5173:5173"
+    command: npm run dev
+    networks:
+      - iswara_network
   db:
     image: postgres:15
     container_name: iswara_db
