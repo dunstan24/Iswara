@@ -128,4 +128,3 @@ MS-1     MS-2              MS-3    MS-4     MS-5     MS-6
 
 ---
 
-*Disusun oleh Intercode.id Team · Kantor Desa Gulingan, Mei 2026*
