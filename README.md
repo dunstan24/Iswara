@@ -9,7 +9,7 @@
 
 | Atribut | Detail |
 |---|---|
-| **Nama Sistem** | ISWARA TPS 3R Sapuh Jagat Gulingan V2 |
+| **Nama Sistem** | ISWARA TPS 3R Sapuh Jagat Gulingan  |
 | **Total Milestone** | 6 Milestone |
 | **Durasi Proyek** | 29 Minggu |
 | **Periode** | 8 Juni – 31 Desember 2026 |
@@ -23,7 +23,7 @@
 Jun 2026        Jul         Ags         Sep         Okt         Nov         Des
 |── MS-1 ──────────|── MS-2 ──|── MS-3 ──|──── MS-4 ────|── MS-5 ──|── MS-6 ──|
   Fondasi &          Pelanggan   Pengangkut  Keuangan &     Bank        Finalisasi
-  Infrastruktur      & Aset      an Sampah   Pengolahan     Sampah      & Go-Live
+  Infrastruktur      & Aset      an Sampah   Pengolahan     Sampah      & Go-Lie
   (Minggu 1–8)       (9–12)      (13–16)     (17–21)        (22–25)     (26–29)
 ```
 
