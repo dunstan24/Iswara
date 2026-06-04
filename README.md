@@ -750,7 +750,7 @@ Semua response API menggunakan format berikut:
 }
 ```
 
----
+### MS-2 · Akhir Juli 2026 — Modul Pondasi Selesai
 
 ## Frontend Conventions
 
@@ -808,7 +808,7 @@ const handleSubmit = (e) => {
 };
 ```
 
----
+### MS-4 · Akhir Oktober 2026 — Modul Keuangan Selesai ⭐
 
 ## GIS & PostGIS
 
