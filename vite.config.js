@@ -11,14 +11,13 @@ export default defineConfig({
         react(),
     ],
     server: {
-        host: '0.0.0.0',
         port: 5173,
         strictPort: true,
         cors: true,
-        hmr: {
-            host: 'iswara.ddev.site',
-            clientPort: 5173,
-            protocol: 'wss'
-        }
+        // hmr: {
+        //     host: 'iswara.ddev.site',
+        //     clientPort: 5173,
+        //     protocol: 'wss'
+        // }
     }
 });
