@@ -15,10 +15,10 @@ export default defineConfig({
         port: 5173,
         strictPort: true,
         cors: true,
-        hmr: {
-            host: 'iswara.ddev.site',
-            clientPort: 5173,
-            protocol: 'wss'
-        }
+        // hmr: {
+        //     host: 'iswara.ddev.site',
+        //     clientPort: 5173,
+        //     protocol: 'wss'
+        // }
     }
 });
