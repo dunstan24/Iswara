@@ -9,6 +9,8 @@ services:
       - "8000:80"
     volumes:
       - .:/var/www/html
+      - /var/www/html/public/build
+      - /var/www/html/vendor
     environment:
       - DB_CONNECTION=pgsql
       - DB_HOST=db
@@ -24,12 +26,13 @@ services:
   frontend:
     image: node:20
     container_name: iswara_frontend
-    working_dir: /var/www/html
+    working_dir: /app
     volumes:
-      - .:/var/www/html
+      - .:/app
+      - /app/node_modules
     ports:
       - "5173:5173"
-    command: npm run dev
+    command: sh -c "npm install --legacy-peer-deps && npm run dev"
     networks:
       - iswara_network
   db:
