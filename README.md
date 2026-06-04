@@ -1,4 +1,4 @@
-# 🗑️ ISWARA TPS 3R — Sapuh Jagat Gulingan V2
+# 🗑️ ISWARA TPS 3R — Sapuh Jagat Gulingan 
 
 > **Sistem Informasi Terpadu Pengelolaan Sampah Berbasis Digital**  
 > Platform manajemen TPS 3R (Tempat Pengolahan Sampah Reduce-Reuse-Recycle) yang mencakup pengangkutan, keuangan, bank sampah, dan pengkomposan.
