@@ -36,7 +36,7 @@ services:
     networks:
       - iswara_network
   db:
-    image: postgres:15
+    image: postgis/postgis:15-3.4
     container_name: iswara_db
     restart: unless-stopped
     ports:
