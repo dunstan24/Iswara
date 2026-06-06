@@ -502,30 +502,50 @@ Route::middleware(['auth', 'verified'])
 ```
 resources/js/Pages/Complaint/
 ├── Complaints/
-│   ├── Index.jsx     ← Daftar keluhan dengan filter & tabel
-│   ├── Create.jsx    ← Form buat keluhan baru
-│   ├── Show.jsx      ← Detail keluhan + timeline penanganan
-│   └── Edit.jsx      ← Form edit keluhan
+│   ├── Index.tsx     ← Daftar keluhan dengan filter & tabel
+│   ├── Create.tsx    ← Form buat keluhan baru
+│   ├── Show.tsx      ← Detail keluhan + timeline penanganan
+│   └── Edit.tsx      ← Form edit keluhan
 └── ComplaintHandlings/
-    └── Create.jsx    ← Form tambah penanganan
+    └── Create.tsx    ← Form tambah penanganan
 ```
+
+### Aturan Wajib TypeScript (TSX)
+- **Wajib** mendefinisikan interface/type untuk props dari halaman Inertia.
+- **Wajib** menggunakan tipe bentukan Laravel/Inertia seperti `PageProps`.
+- Hindari penggunaan `any` kecuali benar-benar terpaksa.
 
 ### Pola Halaman Index (List)
 
-```jsx
-// resources/js/Pages/Complaint/Complaints/Index.jsx
+```tsx
+// resources/js/Pages/Complaint/Complaints/Index.tsx
 import AppLayout from '@/Layouts/AppLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import DataTable from '@/Components/UI/DataTable';
 import StatusBadge from '@/Components/UI/StatusBadge';
 import usePermission from '@/Hooks/usePermission';
+import { PageProps } from '@/types';
 
-export default function ComplaintsIndex({ complaints, filters }) {
+interface Complaint {
+  complaint_id: number;
+  complaint_code: string;
+  customer: { full_name: string };
+  complaint_type: { complaint_name: string };
+  complaint_status: string;
+  created_at: string;
+}
+
+interface IndexProps extends PageProps {
+  complaints: { data: Complaint[]; current_page: number; last_page: number };
+  filters: { search?: string };
+}
+
+export default function ComplaintsIndex({ complaints, filters }: IndexProps) {
   const { can } = usePermission();
   const [search, setSearch] = useState(filters.search || '');
 
-  const handleSearch = (e) => {
+  const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     router.get(route('complaints.index'), { search }, { preserveState: true });
   };
@@ -565,12 +585,12 @@ export default function ComplaintsIndex({ complaints, filters }) {
           {
             key: 'complaint_status',
             label: 'Status',
-            render: (row) => <StatusBadge status={row.complaint_status} />
+            render: (row: Complaint) => <StatusBadge status={row.complaint_status} />
           },
           { key: 'created_at', label: 'Tanggal Lapor' },
         ]}
         pagination={complaints}
-        rowLink={(row) => route('complaints.show', row.complaint_id)}
+        rowLink={(row: Complaint) => route('complaints.show', row.complaint_id)}
       />
     </AppLayout>
   );
@@ -579,12 +599,18 @@ export default function ComplaintsIndex({ complaints, filters }) {
 
 ### Pola Form dengan Inertia
 
-```jsx
-// resources/js/Pages/Complaint/Complaints/Create.jsx
+```tsx
+// resources/js/Pages/Complaint/Complaints/Create.tsx
 import { useForm } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
+import { PageProps } from '@/types';
 
-export default function ComplaintsCreate({ customers, complaintTypes }) {
+interface CreateProps extends PageProps {
+  customers: any[];
+  complaintTypes: any[];
+}
+
+export default function ComplaintsCreate({ customers, complaintTypes }: CreateProps) {
   const { data, setData, post, processing, errors } = useForm({
     customer_id: '',
     complaint_type_id: '',
@@ -593,7 +619,7 @@ export default function ComplaintsCreate({ customers, complaintTypes }) {
     longitude: '',
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     post(route('complaints.store'));
   };
