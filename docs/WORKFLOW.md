@@ -502,30 +502,50 @@ Route::middleware(['auth', 'verified'])
 ```
 resources/js/Pages/Complaint/
 ├── Complaints/
-│   ├── Index.jsx     ← Daftar keluhan dengan filter & tabel
-│   ├── Create.jsx    ← Form buat keluhan baru
-│   ├── Show.jsx      ← Detail keluhan + timeline penanganan
-│   └── Edit.jsx      ← Form edit keluhan
+│   ├── Index.tsx     ← Daftar keluhan dengan filter & tabel
+│   ├── Create.tsx    ← Form buat keluhan baru
+│   ├── Show.tsx      ← Detail keluhan + timeline penanganan
+│   └── Edit.tsx      ← Form edit keluhan
 └── ComplaintHandlings/
-    └── Create.jsx    ← Form tambah penanganan
+    └── Create.tsx    ← Form tambah penanganan
 ```
+
+### Aturan Wajib TypeScript (TSX)
+- **Wajib** mendefinisikan interface/type untuk props dari halaman Inertia.
+- **Wajib** menggunakan tipe bentukan Laravel/Inertia seperti `PageProps`.
+- Hindari penggunaan `any` kecuali benar-benar terpaksa.
 
 ### Pola Halaman Index (List)
 
-```jsx
-// resources/js/Pages/Complaint/Complaints/Index.jsx
+```tsx
+// resources/js/Pages/Complaint/Complaints/Index.tsx
 import AppLayout from '@/Layouts/AppLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import DataTable from '@/Components/UI/DataTable';
 import StatusBadge from '@/Components/UI/StatusBadge';
 import usePermission from '@/Hooks/usePermission';
+import { PageProps } from '@/types';
 
-export default function ComplaintsIndex({ complaints, filters }) {
+interface Complaint {
+  complaint_id: number;
+  complaint_code: string;
+  customer: { full_name: string };
+  complaint_type: { complaint_name: string };
+  complaint_status: string;
+  created_at: string;
+}
+
+interface IndexProps extends PageProps {
+  complaints: { data: Complaint[]; current_page: number; last_page: number };
+  filters: { search?: string };
+}
+
+export default function ComplaintsIndex({ complaints, filters }: IndexProps) {
   const { can } = usePermission();
   const [search, setSearch] = useState(filters.search || '');
 
-  const handleSearch = (e) => {
+  const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     router.get(route('complaints.index'), { search }, { preserveState: true });
   };
@@ -565,12 +585,12 @@ export default function ComplaintsIndex({ complaints, filters }) {
           {
             key: 'complaint_status',
             label: 'Status',
-            render: (row) => <StatusBadge status={row.complaint_status} />
+            render: (row: Complaint) => <StatusBadge status={row.complaint_status} />
           },
           { key: 'created_at', label: 'Tanggal Lapor' },
         ]}
         pagination={complaints}
-        rowLink={(row) => route('complaints.show', row.complaint_id)}
+        rowLink={(row: Complaint) => route('complaints.show', row.complaint_id)}
       />
     </AppLayout>
   );
@@ -579,12 +599,18 @@ export default function ComplaintsIndex({ complaints, filters }) {
 
 ### Pola Form dengan Inertia
 
-```jsx
-// resources/js/Pages/Complaint/Complaints/Create.jsx
+```tsx
+// resources/js/Pages/Complaint/Complaints/Create.tsx
 import { useForm } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
+import { PageProps } from '@/types';
 
-export default function ComplaintsCreate({ customers, complaintTypes }) {
+interface CreateProps extends PageProps {
+  customers: any[];
+  complaintTypes: any[];
+}
+
+export default function ComplaintsCreate({ customers, complaintTypes }: CreateProps) {
   const { data, setData, post, processing, errors } = useForm({
     customer_id: '',
     complaint_type_id: '',
@@ -593,7 +619,7 @@ export default function ComplaintsCreate({ customers, complaintTypes }) {
     longitude: '',
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     post(route('complaints.store'));
   };
@@ -884,33 +910,268 @@ protected function schedule(Schedule $schedule): void {
 
 ## Workflow Testing
 
-### Menulis Feature Test
+Setiap fitur yang di-develop **WAJIB** memiliki test. Tidak ada fitur yang boleh di-merge tanpa test yang mencakup skenario utama.
+
+### Prinsip Testing ISWARA
+
+1. **Setiap Service WAJIB memiliki Unit Test** — Service adalah tempat logika bisnis, jadi wajib diuji secara terisolasi.
+2. **Setiap CRUD Endpoint WAJIB memiliki Feature Test** — Untuk memastikan alur request-response bekerja, termasuk validasi, otorisasi, dan redirect.
+3. **Penamaan test method WAJIB deskriptif** — Gunakan format `test_<subjek>_<aksi>_<hasil>()`, contoh: `test_admin_can_delete_complaint()`.
+4. **Gunakan `RefreshDatabase` trait** — Agar setiap test berjalan di database yang bersih.
+
+### Struktur Folder Test
+
+```
+tests/
+├── Feature/                          ← Test endpoint HTTP (Controller + Route + View)
+│   ├── Master/
+│   │   ├── RegionTest.php
+│   │   ├── WasteTypeTest.php
+│   │   └── PaymentMethodTest.php
+│   ├── Complaint/
+│   │   ├── ComplaintCreationTest.php
+│   │   └── ComplaintHandlingTest.php
+│   ├── Customer/
+│   │   └── CustomerCrudTest.php
+│   └── Auth/
+│       └── LoginTest.php
+├── Unit/                             ← Test logika bisnis terisolasi (Service, Enum, Helper)
+│   ├── Services/
+│   │   ├── ComplaintServiceTest.php
+│   │   ├── InvoiceServiceTest.php
+│   │   └── CustomerServiceTest.php
+│   ├── Enums/
+│   │   └── AccountStatusTest.php
+│   └── Models/
+│       └── RegionTest.php
+└── TestCase.php
+```
+
+### Menulis Unit Test (Service)
+
+Unit test menguji logika **Service** secara terisolasi. Test ini wajib ada untuk setiap Service method yang mengandung logika bisnis (kalkulasi, validasi kompleks, transformasi data).
+
+```php
+// tests/Unit/Services/ComplaintServiceTest.php
+
+namespace Tests\Unit\Services;
+
+use Tests\TestCase;
+use App\Services\Complaint\ComplaintService;
+use App\Models\Master\ComplaintType;
+use App\Models\User;
+use App\Enums\PriorityLevel;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+class ComplaintServiceTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private ComplaintService $service;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->service = app(ComplaintService::class);
+    }
+
+    public function test_create_complaint_returns_complaint_with_correct_status(): void
+    {
+        $user = User::factory()->create();
+        $complaintType = ComplaintType::factory()->create([
+            'priority_level' => PriorityLevel::Tinggi,
+        ]);
+
+        $data = [
+            'customer_id'       => 1,
+            'complaint_type_id' => $complaintType->complaint_type_id,
+            'description'       => 'Sampah tidak diangkut',
+        ];
+
+        $complaint = $this->service->create($data, $user);
+
+        $this->assertEquals('Diterima', $complaint->complaint_status->value);
+        $this->assertNotNull($complaint->complaint_code);
+    }
+
+    public function test_calculate_sla_deadline_based_on_complaint_type(): void
+    {
+        $complaintType = ComplaintType::factory()->create([
+            'SLA_response_hour'    => 24,
+            'SLA_resolution_hour'  => 72,
+        ]);
+
+        $deadline = $this->service->calculateSlaDeadline($complaintType);
+
+        $this->assertEquals(now()->addHours(72)->format('Y-m-d H'), $deadline->format('Y-m-d H'));
+    }
+}
+```
+
+### Menulis Feature Test (Controller/Endpoint)
+
+Feature test menguji alur lengkap dari HTTP request sampai response. Wajib mencakup:
+- **Happy path** (skenario berhasil)
+- **Validasi gagal** (field kosong / format salah)
+- **Otorisasi** (user tanpa izin ditolak)
+
+```php
+// tests/Feature/Master/RegionTest.php
+
+namespace Tests\Feature\Master;
+
+use Tests\TestCase;
+use App\Models\User;
+use App\Models\Master\Region;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+class RegionTest extends TestCase
+{
+    use RefreshDatabase;
+
+    // === HAPPY PATH ===
+
+    public function test_admin_can_view_regions_index(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+
+        Region::factory()->count(3)->create();
+
+        $response = $this->actingAs($admin)
+            ->get(route('master.regions.index'));
+
+        $response->assertStatus(200);
+        $response->assertInertia(fn ($page) =>
+            $page->component('Master/Regions/Index')
+                 ->has('regions.data', 3)
+        );
+    }
+
+    public function test_admin_can_create_region(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+
+        $response = $this->actingAs($admin)
+            ->post(route('master.regions.store'), [
+                'region_name' => 'Banjar Adat Baru',
+                'region_type' => 'Banjar',
+                'service_status' => 'Aktif',
+            ]);
+
+        $response->assertRedirect(route('master.regions.index'));
+        $this->assertDatabaseHas('master_regions', [
+            'region_name' => 'Banjar Adat Baru',
+        ]);
+    }
+
+    public function test_admin_can_update_region(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+        $region = Region::factory()->create();
+
+        $response = $this->actingAs($admin)
+            ->put(route('master.regions.update', $region->region_id), [
+                'region_name' => 'Banjar Adat Diperbarui',
+                'region_type' => 'Banjar',
+                'service_status' => 'Aktif',
+            ]);
+
+        $response->assertRedirect(route('master.regions.index'));
+        $this->assertDatabaseHas('master_regions', [
+            'region_name' => 'Banjar Adat Diperbarui',
+        ]);
+    }
+
+    public function test_admin_can_delete_region(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+        $region = Region::factory()->create();
+
+        $response = $this->actingAs($admin)
+            ->delete(route('master.regions.destroy', $region->region_id));
+
+        $response->assertRedirect(route('master.regions.index'));
+        $this->assertDatabaseMissing('master_regions', [
+            'region_id' => $region->region_id,
+        ]);
+    }
+
+    // === VALIDASI ===
+
+    public function test_create_region_requires_region_name(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+
+        $response = $this->actingAs($admin)
+            ->post(route('master.regions.store'), [
+                'region_name' => '', // kosong
+            ]);
+
+        $response->assertSessionHasErrors(['region_name']);
+    }
+
+    // === OTORISASI ===
+
+    public function test_operator_cannot_delete_region(): void
+    {
+        $operator = User::factory()->create();
+        $operator->assignRole('operator');
+        $region = Region::factory()->create();
+
+        $response = $this->actingAs($operator)
+            ->delete(route('master.regions.destroy', $region->region_id));
+
+        $response->assertForbidden();
+    }
+
+    public function test_guest_cannot_access_regions(): void
+    {
+        $response = $this->get(route('master.regions.index'));
+
+        $response->assertRedirect(route('login'));
+    }
+}
+```
+
+### Menulis Feature Test (Complaint — contoh Modul Kompleks)
 
 ```php
 // tests/Feature/Complaint/ComplaintCreationTest.php
-class ComplaintCreationTest extends TestCase {
+
+namespace Tests\Feature\Complaint;
+
+use Tests\TestCase;
+use App\Models\User;
+use App\Models\Master\ComplaintType;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+class ComplaintCreationTest extends TestCase
+{
     use RefreshDatabase;
 
-    public function test_customer_can_create_complaint(): void {
-        $customer = Customer::factory()->create();
+    public function test_customer_can_create_complaint(): void
+    {
         $user = User::factory()->withRole('penerima_manfaat')->create();
-        $user->customers()->attach($customer->customer_id);
 
         $response = $this->actingAs($user)
             ->post(route('complaints.store'), [
-                'customer_id'       => $customer->customer_id,
                 'complaint_type_id' => ComplaintType::factory()->create()->complaint_type_id,
                 'description'       => 'Sampah tidak diangkut sejak 3 hari lalu',
             ]);
 
         $response->assertRedirect(route('complaints.index'));
         $this->assertDatabaseHas('complaints', [
-            'customer_id' => $customer->customer_id,
             'description' => 'Sampah tidak diangkut sejak 3 hari lalu',
         ]);
     }
 
-    public function test_complaint_requires_description(): void {
+    public function test_complaint_requires_description(): void
+    {
         $user = User::factory()->withRole('penerima_manfaat')->create();
 
         $response = $this->actingAs($user)
@@ -921,11 +1182,46 @@ class ComplaintCreationTest extends TestCase {
 }
 ```
 
-### Test Coverage Minimum
+### Test Coverage Minimum (Wajib per Fitur)
 
-- Semua CRUD endpoint: **Feature test wajib**
-- Service method penting (kalkulasi tagihan, generate invoice): **Unit test wajib**
-- Edge cases: tambahkan sesuai kompleksitas modul
+| Kategori | Jenis Test | Keterangan |
+|----------|-----------|------------|
+| CRUD Endpoint | Feature Test | **Wajib** — Minimal: create berhasil, create gagal validasi, unauthorized ditolak |
+| Service method (kalkulasi, generate) | Unit Test | **Wajib** — Setiap method yang berisi logika bisnis inti |
+| Permission & Role check | Feature Test | **Wajib** — Pastikan user tanpa izin mendapat response `403` |
+| Edge case & error handling | Unit/Feature | **Disarankan** — Tambahkan sesuai kompleksitas modul |
+| Model relationship & scope | Unit Test | **Disarankan** — Khusus untuk relasi atau scope yang rumit |
+
+### Menjalankan Test
+
+Seluruh test **WAJIB** dijalankan di dalam container Docker karena membutuhkan koneksi ke PostgreSQL + PostGIS.
+
+```bash
+# Jalankan semua test
+docker compose exec app php artisan test
+
+# Jalankan test untuk modul spesifik
+docker compose exec app php artisan test --filter=RegionTest
+
+# Jalankan hanya unit test
+docker compose exec app php artisan test --testsuite=Unit
+
+# Jalankan hanya feature test
+docker compose exec app php artisan test --testsuite=Feature
+
+# Jalankan test dengan output verbose (detail per method)
+docker compose exec app php artisan test -v
+```
+
+### Konvensi Penamaan Test
+
+| Pola | Contoh |
+|------|--------|
+| `test_<role>_can_<aksi>` | `test_admin_can_delete_complaint()` |
+| `test_<role>_cannot_<aksi>` | `test_operator_cannot_delete_region()` |
+| `test_<aksi>_requires_<field>` | `test_create_region_requires_region_name()` |
+| `test_<aksi>_returns_<hasil>` | `test_calculate_sla_returns_correct_deadline()` |
+| `test_guest_cannot_access_<fitur>` | `test_guest_cannot_access_regions()` |
 
 ---
 
@@ -940,7 +1236,7 @@ Sebelum merge PR, reviewer **wajib** memverifikasi semua poin berikut:
 - [ ] Enum digunakan untuk nilai kolom tetap
 - [ ] Model menggunakan `HasAuditLog` jika data penting
 - [ ] Tidak ada raw SQL selain untuk PostGIS (gunakan Eloquent)
-- [ ] Permission dicek di Form Request atau Middleware (bukan hanya di blade/jsx)
+- [ ] Permission dicek di Form Request atau Middleware (bukan hanya di blade/tsx)
 - [ ] Tidak ada `dd()`, `var_dump()`, atau `print_r()` tertinggal
 - [ ] Semua FK menggunakan `constrained()` dengan referensi kolom yang tepat
 - [ ] Seeder diupdate jika ada permission baru

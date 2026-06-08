@@ -48,7 +48,7 @@ ISWARA adalah platform digital terpadu berbasis web dan mobile untuk mendukung s
 | Layer | Teknologi |
 |-------|-----------|
 | Backend Framework | Laravel 13 |
-| Frontend Framework | React.js + Inertia.js |
+| Frontend Framework | React.js + Inertia.js (TypeScript/TSX) |
 | Database | PostgreSQL 16+ dengan ekstensi PostGIS |
 | Spatial / GIS | PostGIS 3.x |
 | Styling | Tailwind CSS |
@@ -61,7 +61,7 @@ ISWARA adalah platform digital terpadu berbasis web dan mobile untuk mendukung s
 | QR Code | SimpleSoftwareIO/simple-qrcode |
 | Maps/GIS (Frontend) | Leaflet.js atau MapLibre GL JS |
 | Testing | Pest PHP (backend) + Vitest (frontend) |
-| Containerisasi | Docker + Docker Compose |
+| Containerisasi | Docker + Docker Compose (Direkomendasikan) |
 | CI/CD | GitHub Actions |
 
 ---
@@ -370,39 +370,39 @@ iswara/
 │
 ├── resources/
 │   ├── js/
-│   │   ├── app.jsx                      # Entry point React + Inertia
-│   │   ├── bootstrap.js
+│   │   ├── app.tsx                      # Entry point React + Inertia
+│   │   ├── bootstrap.ts
 │   │   │
 │   │   ├── Components/                  # Reusable React components
 │   │   │   ├── UI/                      # Komponen UI generik
-│   │   │   │   ├── Button.jsx
-│   │   │   │   ├── Modal.jsx
-│   │   │   │   ├── DataTable.jsx
-│   │   │   │   ├── StatusBadge.jsx
-│   │   │   │   ├── QRCodeDisplay.jsx
+│   │   │   │   ├── Button.tsx
+│   │   │   │   ├── Modal.tsx
+│   │   │   │   ├── DataTable.tsx
+│   │   │   │   ├── StatusBadge.tsx
+│   │   │   │   ├── QRCodeDisplay.tsx
 │   │   │   │   └── ...
 │   │   │   ├── Map/                     # Komponen GIS & Peta
-│   │   │   │   ├── MapContainer.jsx     # Wrapper Leaflet/MapLibre
-│   │   │   │   ├── CustomerMarker.jsx
-│   │   │   │   ├── RoutePolyline.jsx
-│   │   │   │   ├── RegionPolygon.jsx
-│   │   │   │   └── VehicleTracker.jsx   # Real-time tracking
+│   │   │   │   ├── MapContainer.tsx     # Wrapper Leaflet/MapLibre
+│   │   │   │   ├── CustomerMarker.tsx
+│   │   │   │   ├── RoutePolyline.tsx
+│   │   │   │   ├── RegionPolygon.tsx
+│   │   │   │   └── VehicleTracker.tsx   # Real-time tracking
 │   │   │   ├── Charts/                  # Komponen dashboard & statistik
-│   │   │   │   ├── WasteVolumeChart.jsx
-│   │   │   │   ├── PaymentRateChart.jsx
-│   │   │   │   └── CompostProductionChart.jsx
+│   │   │   │   ├── WasteVolumeChart.tsx
+│   │   │   │   ├── PaymentRateChart.tsx
+│   │   │   │   └── CompostProductionChart.tsx
 │   │   │   └── Forms/                   # Form components per modul
 │   │   │
 │   │   ├── Layouts/
-│   │   │   ├── AppLayout.jsx            # Layout utama (sidebar, topbar)
-│   │   │   ├── AuthLayout.jsx           # Layout login
-│   │   │   ├── DashboardTvLayout.jsx    # Layout untuk display TV publik
-│   │   │   └── MobileLayout.jsx         # Layout untuk petugas lapangan
+│   │   │   ├── AppLayout.tsx            # Layout utama (sidebar, topbar)
+│   │   │   ├── AuthLayout.tsx           # Layout login
+│   │   │   ├── DashboardTvLayout.tsx    # Layout untuk display TV publik
+│   │   │   └── MobileLayout.tsx         # Layout untuk petugas lapangan
 │   │   │
 │   │   ├── Pages/                       # Inertia Pages (1 file = 1 route)
 │   │   │   ├── Auth/
-│   │   │   │   ├── Login.jsx
-│   │   │   │   └── Profile.jsx
+│   │   │   │   ├── Login.tsx
+│   │   │   │   └── Profile.tsx
 │   │   │   ├── Master/
 │   │   │   │   ├── Roles/
 │   │   │   │   ├── Users/
@@ -420,14 +420,14 @@ iswara/
 │   │   │   ├── WasteBank/
 │   │   │   ├── Support/
 │   │   │   └── Dashboard/
-│   │   │       ├── TvDisplay.jsx        # Dashboard TV publik (full screen)
-│   │   │       ├── Management.jsx
-│   │   │       └── Village.jsx
+│   │   │       ├── TvDisplay.tsx        # Dashboard TV publik (full screen)
+│   │   │       ├── Management.tsx
+│   │   │       └── Village.tsx
 │   │   │
 │   │   └── Hooks/                       # Custom React Hooks
-│   │       ├── usePermission.js         # Cek hak akses RBAC di frontend
-│   │       ├── useGeolocation.js        # GPS tracking
-│   │       └── useRealtime.js           # WebSocket / Echo
+│   │       ├── usePermission.ts         # Cek hak akses RBAC di frontend
+│   │       ├── useGeolocation.ts        # GPS tracking
+│   │       └── useRealtime.ts           # WebSocket / Echo
 │   │
 │   ├── views/
 │   │   ├── app.blade.php                # Root Inertia view
@@ -586,19 +586,24 @@ npm run dev
 npm run build
 ```
 
-### 7. Jalankan Server
+### 7. Jalankan Server (Manual)
 
+Jika tidak menggunakan Docker, jalankan:
 ```bash
 php artisan serve
 # atau
 php artisan serve --host=0.0.0.0 --port=8000
 ```
 
-### Menggunakan Docker
+### Menggunakan Docker (Metode Utama)
 
+Proyek ini telah dikonfigurasi untuk berjalan mulus menggunakan Docker.
 ```bash
-docker-compose up -d
-docker-compose exec app php artisan migrate --seed
+# Build dan jalankan seluruh container
+docker compose up -d --build
+
+# Masuk ke container atau jalankan perintah langsung
+docker compose exec iswara_app php artisan migrate --seed
 ```
 
 ---
@@ -758,14 +763,15 @@ Semua response API menggunakan format berikut:
 
 Setiap Inertia Page mengikuti pola berikut:
 
-```jsx
-// resources/js/Pages/Customer/Customers/Index.jsx
+```tsx
+// resources/js/Pages/Customer/Customers/Index.tsx
 import AppLayout from '@/Layouts/AppLayout';
 import { Head } from '@inertiajs/react';
 import DataTable from '@/Components/UI/DataTable';
 import usePermission from '@/Hooks/usePermission';
+import { PageProps } from '@/types';
 
-export default function CustomersIndex({ customers, filters }) {
+export default function CustomersIndex({ customers, filters }: PageProps<{ customers: any[], filters: any }>) {
   const { can } = usePermission();
 
   return (
@@ -780,7 +786,7 @@ export default function CustomersIndex({ customers, filters }) {
 
 ### Cek Permissions di Frontend
 
-```jsx
+```tsx
 import usePermission from '@/Hooks/usePermission';
 
 const { can, is } = usePermission();
@@ -794,7 +800,7 @@ if (is('admin')) { ... }
 
 ### Inertia Form
 
-```jsx
+```tsx
 import { useForm } from '@inertiajs/react';
 
 const { data, setData, post, processing, errors } = useForm({

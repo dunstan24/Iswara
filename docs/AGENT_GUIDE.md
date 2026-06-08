@@ -114,6 +114,9 @@ Ini adalah aturan yang **tidak boleh dilanggar** saat menulis kode:
 7. **HARUS** menyertakan index database pada kolom FK dan kolom yang sering difilter
 8. **HARUS** menyertakan `$table->timestamps()` di semua migrasi
 9. **HARUS** menggunakan `geography` PostGIS (bukan `geometry`) untuk kolom koordinat karena perhitungan jarak dalam meter lebih akurat
+10. **HARUS** mendefinisikan tipe/interface TypeScript secara eksplisit untuk props, state, dan response API. Hindari penggunaan `any`.
+11. **HARUS** membuat Unit Test (untuk Service) dan Feature Test (untuk Controller/Endpoint) di setiap fitur baru. Tidak ada fitur yang boleh di-merge tanpa test.
+12. **HARUS** menjalankan `docker compose exec app php artisan test` dan memastikan semua test hijau sebelum commit.
 
 ### ❌ JANGAN
 
